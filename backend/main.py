@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from dotenv import load_dotenv
 import os
+from backend.bedrock_service import gen_suggestion
 
 load_dotenv()  # pulls in .env AWS keys
 
@@ -17,13 +18,8 @@ async def root():
 
 @app.post("/suggest")
 async def suggest(chunk: TranscriptChunk):
-    """
-    FIRST PASS:
-    • simply echoes a dummy suggestion.
-    • we’ll wire in Bedrock later.
-    """
-    # TODO: call real GenAI
-    return {
-        "suggestion": f"Thanks for sharing, {chunk.text[:20]}...",
-        "sentiment": "neutral"
-    }
+    try:
+        gen = gen_suggestion(chunk.text)
+        return gen
+    except Exception as e:
+        return {"error": str(e)}
