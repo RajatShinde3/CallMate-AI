@@ -1,3 +1,4 @@
+
 # 📞 CallMate AI – Real-time GenAI Call Assistant
 
 <p align="center">
@@ -12,27 +13,26 @@
 
 ## 🚀 Overview
 
-Customer agents handle high-stakes calls — under pressure.  
-CallMate AI augments them with **real-time GenAI suggestions** while ensuring:
+CallMate AI supports customer agents during high-pressure conversations by providing real-time GenAI suggestions that are:
 
-- ✅ Sentiment detection
-- ✅ Policy compliance
-- ✅ Explainability (confidence + latency)
-- ✅ Dual-mode input (Voice/Text)
+- ✅ Sentiment-aware  
+- ✅ Policy-compliant  
+- ✅ Confidence-transparent  
+- ✅ Voice and text driven  
 
 ---
 
 ## 🎯 Key Features
 
-| ✅ Feature                      | 💡 Description                                                        |
-|-------------------------------|------------------------------------------------------------------------|
-| 🎙️ Voice + Text Input         | Real-time mic or manual entry using Streamlit & `streamlit-webrtc`    |
-| 🤖 Multi-Agent LLM Inference  | Parallel agents: Sentiment, Compliance, Knowledge                     |
-| 📊 Confidence Scores          | Shows how sure each agent is (transparency + trust)                   |
-| ⚠️ PII Redaction              | Automatically masks sensitive terms (e.g. card, CVV, emails)           |
-| 📑 Post-call Summary          | Agent-readable session recap with escalation cue                      |
-| 🗳️ Feedback Logging           | Store helpful/needs-improvement feedback in SQLite DB                 |
-| ☁️ AWS-ready Deployment       | Works on EC2, scalable to Amazon Bedrock                              |
+| ✅ Feature                | 💡 Description                                                           |
+|--------------------------|---------------------------------------------------------------------------|
+| 🎙️ Voice & Text Input    | Upload `.wav` audio or type input manually in Streamlit UI               |
+| 🤖 Multi-Agent Inference | Sentiment, Compliance, and Knowledge agents working in parallel           |
+| 📊 Confidence Display    | Transparent scoring for all responses                                     |
+| ⚠️ PII Redaction         | Detects and masks sensitive info (email, card numbers, etc.)              |
+| 📑 Post-call Summary     | Automatically generated call recap with key insights                     |
+| 🗳️ Feedback Logging      | User feedback stored in local SQLite database                             |
+| ☁️ Cloud-Ready           | Deployable on AWS EC2, Bedrock-compatible architecture                    |
 
 ---
 
@@ -48,96 +48,139 @@ graph TD
     CA --> ESC
     KA --> UI[💬 Streamlit UI]
     ESC --> UI
+```
 
+---
 
-| 🎥 Type            | 🔗 Link                                                                                          |
-| ------------------ | ------------------------------------------------------------------------------------------------ |
-| Live EC2 Demo      | [http://ec2-XX-XX-XX.compute.amazonaws.com:8501](http://ec2-XX-XX-XX.compute.amazonaws.com:8501) |
-| Swagger Docs       | [http://localhost:8000/docs](http://localhost:8000/docs)                                         |
-| Demo Video (3 min) | [https://youtu.be/YOUR\_VIDEO\_ID](https://youtu.be/YOUR_VIDEO_ID)                               |
+## 🖥️ Live Demos & Docs
 
+| Type            | Link                                                                                           |
+|-----------------|------------------------------------------------------------------------------------------------|
+| 🖥️ Live EC2 Demo | [http://ec2-XX-XX-XX.compute.amazonaws.com:8501](http://ec2-XX-XX-XX.compute.amazonaws.com:8501) |
+| 🧪 Swagger Docs   | [http://localhost:8000/docs](http://localhost:8000/docs)                                       |
+| 🎥 Demo Video    | [https://youtu.be/YOUR_VIDEO_ID](https://youtu.be/YOUR_VIDEO_ID)                               |
 
-| Layer   | Tools Used                       |
-| ------- | -------------------------------- |
-| UI      | Streamlit + WebRTC + HTML badges |
-| Backend | FastAPI, asyncio, pydantic       |
-| Audio   | SpeechRecognition, pydub, ffmpeg |
-| Storage | SQLite for feedback logging      |
-| Infra   | AWS EC2 (Amazon Linux)           |
+---
+
+## 🧰 Tech Stack
+
+| Layer    | Tools Used                       |
+|----------|----------------------------------|
+| UI       | Streamlit, HTML, `streamlit-webrtc` (optional) |
+| Backend  | FastAPI, asyncio, Pydantic       |
+| Audio    | SpeechRecognition, Pydub, FFmpeg |
+| Storage  | SQLite for feedback              |
+| Infra    | AWS EC2, localhost, Bedrock-ready |
+
+---
+
+## 📊 Performance Metrics
 
 | Metric                       | Value        |
-| ---------------------------- | ------------ |
-| Avg. Suggestion Latency      | **\~320 ms** |
-| PII Redaction Accuracy       | **100%**     |
-| Feedback (Demo)              | 👍 5  👎 1   |
-| Sentiment Detection Accuracy | 92% (sample) |
+|-----------------------------|--------------|
+| Avg. LLM Suggestion Latency | ~320 ms      |
+| PII Redaction Accuracy      | 100%         |
+| Sentiment Detection Accuracy| ~92% (sample)|
+| Feedback Received           | 👍 5  👎 1     |
 
+---
 
+## ⚙️ Getting Started
+
+### 1. Clone the repo
+```bash
 git clone https://github.com/RajatShinde/callmate-ai.git
 cd callmate-ai
+```
+
+### 2. Set up virtual environment
+```bash
 python -m venv .venv
-source .venv/bin/activate   # Windows: .venv\\Scripts\\activate
+source .venv/bin/activate       # On Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-🎙️ FFmpeg Required
+```
 
-Download FFmpeg from: https://www.gyan.dev/ffmpeg/builds/
+### 3. Set FFmpeg path (required for audio)
+Download FFmpeg from: [https://www.gyan.dev/ffmpeg/builds/](https://www.gyan.dev/ffmpeg/builds/)
 
-Set in code:
+Set this in your code before using `AudioSegment`:
+```python
 from pydub import AudioSegment
-AudioSegment.converter = "C:/ffmpeg/bin/ffmpeg.exe"
+AudioSegment.converter = "C:/ffmpeg/bin/ffmpeg.exe"  # Update path accordingly
+```
 
-🌐 Deployment (AWS EC2)
-Launch EC2 instance (Amazon Linux / Ubuntu)
+---
 
-Open inbound ports: 8000 (FastAPI), 8501 (Streamlit)
+## 🌐 Deployment (AWS EC2)
 
-Clone repo, install requirements
-
-Start:
-
+1. Launch EC2 instance (Amazon Linux / Ubuntu)
+2. Open inbound ports: **8000** (FastAPI), **8501** (Streamlit)
+3. SSH into server & clone this repo
+4. Run backend:
+```bash
 uvicorn backend.main:app --host 0.0.0.0 --port 8000
+```
+5. Run frontend:
+```bash
 streamlit run frontend/app.py --server.port 8501
-Access via public DNS
+```
+6. Access via public DNS in browser
 
-📑 Folder Structure
+---
 
+## 📁 Project Structure
+
+```
 callmate-ai/
 │
 ├── frontend/              # Streamlit app (app.py)
-├── backend/               # FastAPI backend (main.py, agents.py)
-│   ├── agents.py          # All AI agents (sentiment, knowledge, etc)
-│   ├── feedback_db.py     # Feedback saving logic (SQLite)
-│   └── pii_redactor.py    # Redaction logic for PII
+├── backend/               # FastAPI backend
+│   ├── agents.py          # AI agents: Sentiment, Knowledge, Compliance
+│   ├── feedback_db.py     # Feedback database (SQLite)
+│   └── pii_redactor.py    # PII redaction logic
 ├── requirements.txt       # Python dependencies
-├── README.md              # Project documentation
+└── README.md              # You're here!
+```
 
-🧠 Improvements Ahead
+---
 
-🔄 Replace KnowledgeAgent with Amazon Bedrock Titan or Claude 3
+## 🔮 Future Roadmap
 
-📊 Add streaming chart UI for confidence drift
+- 🔄 Integrate Amazon Bedrock (Titan or Claude)
+- 📊 Add real-time charts for confidence drift
+- 🎙️ Use Amazon Transcribe for improved voice accuracy
+- 💾 Scale logs to DynamoDB
+- 🔐 Add role-based authentication for agents
 
-🎙️ Replace STT with Amazon Transcribe
+---
 
-💾 Move logs to DynamoDB for scale
+## 🏆 Why CallMate AI?
 
-🏆 Why CallMate AI Stands Out
+| 💥 Factor            | ✅ Strength                                    |
+|----------------------|------------------------------------------------|
+| Real-time UX         | Fast LLM response, voice or text input         |
+| Trust & Transparency | Clear confidence %, latency, PII masking       |
+| Contact Center Ready | Built for CSAT, AHT, escalation tracking       |
+| Modular Design       | Easy to plug in new models or services         |
+| Developer Friendly   | Pythonic, FastAPI/Streamlit, clean code        |
 
-| 💥 Factor            | ✅ Strength                                   |
-| -------------------- | -------------------------------------------- |
-| Real-time UX         | Voice + text input, fast LLM response        |
-| Trust & Transparency | Confidence %, latency, PII masking shown     |
-| Business Alignment   | Focus on call centers, AHT, CSAT, compliance |
-| Scalability Ready    | Agent modularity, Bedrock-compatible         |
-| Beautiful UI         | Streamlit + inline chat memory display       |
+---
 
-📜 License
-MIT – Free for commercial + academic use.
+## 📜 License
 
-📬 Contact
+**MIT License** — Free for personal, academic, and commercial use.
 
-📧 rajatshinde100@gmail.com
+---
 
-🔗 LinkedIn
+## 📬 Contact
 
-🔗 GitHub
+- 📧 Email: [rajatshinde100@gmail.com](mailto:rajatshinde100@gmail.com)  
+- 🔗 [LinkedIn](https://www.linkedin.com/in/YOUR_LINKEDIN)  
+- 🔗 [GitHub](https://github.com/RajatShinde)
+
+---
+
+> ⚠️ DO NOT commit `.env` or sensitive data.
+> This repo includes a `.env.example` to help set up locally.
+
+---
