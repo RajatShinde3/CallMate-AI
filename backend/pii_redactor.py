@@ -1,33 +1,34 @@
 # backend/pii_redactor.py
 import re
-from typing import Tuple, Pattern, Dict
 
-# --- Compile common PII regex patterns ----------------------------
-_PATTERNS: Dict[str, Pattern] = {
-    "EMAIL": re.compile(
-        r"(?i)\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b"
-    ),
-    "PHONE": re.compile(
-        # +1-555-555-5555 | (555) 555-5555 | 555-555-5555
-        r"\b(?:\+?\d{1,3}[-.\s]?)?"
-        r"(?:\(?\d{3}\)?[-.\s]?)\d{3}[-.\s]?\d{4}\b"
-    ),
-    "CARD": re.compile(
-        # 13-16 contiguous digits or separated by spaces
-        r"\b(?:\d[ -]*?){13,16}\b"
-    ),
-}
+# ─────────────────────────────────────────────
+# Precompiled PII Regex Patterns
+# ─────────────────────────────────────────────
+EMAIL_RE   = re.compile(r'\b[\w\.-]+?@\w+?\.\w+?\b', re.I)
+CARD_RE    = re.compile(r'\b(?:\d[ -]*?){13,16}\b')
+PHONE_RE   = re.compile(r'\b(?:\+?\d{1,3}[- ]?)?\d{10}\b')
+NUMBER_RE  = re.compile(r'\b\d{6,}\b')         # 6+ digits (generic IDs)
+NAME_RE    = re.compile(r'\b(Rajat\s+Shinde)\b', re.I)  # Replace with known names
 
-_REPLACE_MAP = {
-    "EMAIL": "[EMAIL]",
-    "PHONE": "[PHONE]",
-    "CARD": "[CARD]",
-}
-
-
+# ─────────────────────────────────────────────
+# Redaction Utility
+# ─────────────────────────────────────────────
 def redact(text: str) -> str:
-    """Return a copy of *text* with PII replaced by tokens."""
-    redacted = text
-    for label, pattern in _PATTERNS.items():
-        redacted = pattern.sub(_REPLACE_MAP[label], redacted)
-    return redacted
+    """Redacts common PII patterns and logs what was replaced."""
+    found = {}
+
+    def _sub(pattern, label):
+        matches = pattern.findall(text)
+        if matches:
+            found[label] = matches
+        return pattern.sub(f'[{label}]', text)
+
+    text = _sub(EMAIL_RE,  'EMAIL')
+    text = _sub(CARD_RE,   'CARD')
+    text = _sub(PHONE_RE,  'PHONE')
+    text = _sub(NUMBER_RE, 'NUMBER')
+    text = _sub(NAME_RE,   'NAME')
+
+    if found:
+        print("🔐 Redacted PII →", found)   # Appears in uvicorn logs
+    return text

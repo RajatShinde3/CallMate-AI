@@ -53,18 +53,20 @@ async def suggest(chunk: TranscriptChunk):
     latency_ms = int((time.time() - start_time) * 1000)
 
     return {
-        "suggestion": f"{suggestion} (via multi-agent)",
-        "sentiment": sentiment,
-        "compliance": compliance,
-        "confidence": {
-            "sentiment": s_conf,
-            "knowledge": k_conf,
-            "compliance": c_conf,
-        },
-        "escalation": escalation,
-        "pii_redacted": safe_text != chunk.text,
-        "latency_ms": latency_ms,
-    }
+    "suggestion": f"{suggestion} (via multi-agent)",
+    "sentiment": sentiment,
+    "compliance": compliance,
+    "confidence": {
+        "sentiment": s_conf,
+        "knowledge": k_conf,
+        "compliance": c_conf,
+    },
+    "escalation": escalation,
+    "pii_redacted": safe_text != chunk.text,
+    "redacted_text": safe_text,
+    "latency_ms": latency_ms,
+}
+
 
 # ───────────────────────────────────────────────────────
 # Consent Logging
