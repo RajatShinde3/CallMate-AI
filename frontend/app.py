@@ -48,7 +48,7 @@ if st.session_state.conversation:
     st.markdown("### 🗒️ Conversation so far")
     for i, line in enumerate(st.session_state.conversation, 1):
         st.markdown(
-            f"<div style='background:#F2F6FF;padding:8px;border-radius:10px;margin-bottom:4px'><b>User {i}:</b> {line}</div>",
+            f"<div style='background:rgb(38, 39, 48);padding:8px;border-radius:10px;margin-bottom:4px'><b>User {i}:</b> {line}</div>",
             unsafe_allow_html=True,
         )
     st.divider()
@@ -56,29 +56,29 @@ if st.session_state.conversation:
 # ─────────────────────────────────────────────────────────────
 # 🎧 Voice Mode
 # ─────────────────────────────────────────────────────────────
-# st.markdown("### 🎧 Voice Mode (optional)")
+st.markdown("### 🎧 Voice Mode (optional)")
 
-# class AudioProcessor:
-#     def recv(self, frame: av.AudioFrame):
-#         # Convert audio frame to PCM (numpy array) and save relevant metadata
-#         pcm = frame.to_ndarray()
-#         st.session_state.audio_frames.append({
-#             "pcm": pcm.tobytes(),
-#             "rate": frame.sample_rate,
-#             "width": 2  # 2 bytes = 16-bit audio
-#         })
-#         print(f"🔊 Audio frame received — {len(pcm.tobytes())} bytes")
-#         return frame
+class AudioProcessor:
+    def recv(self, frame: av.AudioFrame):
+        # Convert audio frame to PCM (numpy array) and save relevant metadata
+        pcm = frame.to_ndarray()
+        st.session_state.audio_frames.append({
+            "pcm": pcm.tobytes(),
+            "rate": frame.sample_rate,
+            "width": 2  # 2 bytes = 16-bit audio
+        })
+        print(f"🔊 Audio frame received — {len(pcm.tobytes())} bytes")
+        return frame
 
-# webrtc_streamer(
-#     key="voice-mode",
-#     mode=WebRtcMode.SENDONLY,
-#     media_stream_constraints={"video": False, "audio": True},
-#     rtc_configuration={"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]},
-#     audio_receiver_size=1024,
-#     audio_frame_callback=AudioProcessor().recv,
-# )
-# print("✅ WebRTC setup complete. Waiting for audio frames...")
+webrtc_streamer(
+    key="voice-mode",
+    mode=WebRtcMode.SENDONLY,
+    media_stream_constraints={"video": False, "audio": True},
+    rtc_configuration={"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]},
+    audio_receiver_size=1024,
+    audio_frame_callback=AudioProcessor().recv,
+)
+print("✅ WebRTC setup complete. Waiting for audio frames...")
 
 st.caption(f"🎹 frames in queue: {len(st.session_state.audio_frames)}")
 
