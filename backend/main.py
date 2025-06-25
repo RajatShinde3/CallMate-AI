@@ -1,94 +1,74 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 from dotenv import load_dotenv
-from pathlib import Path
 import asyncio, time, json
-
-# Internal modules
-from backend.pii_redactor import redact
+from pathlib import Path
 from backend.context_store import add_utterance, get_context
-from backend.feedback_store import save_feedback, count_feedback
 from backend.agents import (
-    SentimentAgent, KnowledgeAgent, ComplianceAgent,
-    EscalationAgent, SummaryAgent
+    SentimentAgent,
+    KnowledgeAgent,
+    ComplianceAgent,
+    EscalationAgent,
+    SummaryAgent
 )
-
-# Optional (for future Bedrock swap)
-# from backend.bedrock_service import gen_suggestion
+from backend.pii_redactor import redact
+from backend.feedback_db import save_feedback_sql as save_feedback
+from backend.feedback_db import summary_sql as count_feedback
 
 load_dotenv()
 
 app = FastAPI(title="CallMate AI – Backend")
 
-# ─────────────────────────────────────────────
-# Pydantic Models
-# ─────────────────────────────────────────────
-
+# ───────────────────────────────────────────────────────
+# Input model
+# ───────────────────────────────────────────────────────
 class TranscriptChunk(BaseModel):
     text: str
     call_id: str
 
-class FeedbackItem(BaseModel):
-    call_id: str
-    text: str
-    helpful: bool
-
-# ─────────────────────────────────────────────
-# Root Health Check
-# ─────────────────────────────────────────────
-
+# ───────────────────────────────────────────────────────
+# Root health check
+# ───────────────────────────────────────────────────────
 @app.get("/")
 async def root():
     return {"status": "backend up"}
 
-# ─────────────────────────────────────────────
-# Suggestion Endpoint (Main AI Call)
-# ─────────────────────────────────────────────
-
+# ───────────────────────────────────────────────────────
+# Main Suggestion Endpoint
+# ───────────────────────────────────────────────────────
 @app.post("/suggest")
 async def suggest(chunk: TranscriptChunk):
     safe_text = redact(chunk.text)
     add_utterance(chunk.call_id, safe_text)
     start_time = time.time()
 
-    # Run multi-agent tasks in parallel
-    sentiment_task  = SentimentAgent(safe_text)
-    suggest_task    = KnowledgeAgent(safe_text)
-    compliance_task = ComplianceAgent(safe_text)
-
-    sentiment, suggestion, compliance = await asyncio.gather(
-        sentiment_task, suggest_task, compliance_task
+    # Run agents concurrently
+    (sentiment, s_conf), (suggestion, k_conf), (compliance, c_conf) = await asyncio.gather(
+        SentimentAgent(safe_text),
+        KnowledgeAgent(safe_text),
+        ComplianceAgent(safe_text),
     )
 
     escalation = await EscalationAgent(sentiment, compliance)
     latency_ms = int((time.time() - start_time) * 1000)
 
     return {
-        "suggestion": suggestion + " (via multi-agent)",
+        "suggestion": f"{suggestion} (via multi-agent)",
         "sentiment": sentiment,
         "compliance": compliance,
+        "confidence": {
+            "sentiment": s_conf,
+            "knowledge": k_conf,
+            "compliance": c_conf,
+        },
         "escalation": escalation,
         "pii_redacted": safe_text != chunk.text,
-        "latency_ms": latency_ms
+        "latency_ms": latency_ms,
     }
 
-# ─────────────────────────────────────────────
-# Feedback Storage
-# ─────────────────────────────────────────────
-
-@app.post("/feedback")
-async def feedback(item: FeedbackItem):
-    save_feedback(item.call_id, item.text, item.helpful)
-    return {"message": "Feedback recorded"}
-
-@app.get("/feedback/summary")
-async def feedback_summary():
-    return count_feedback()
-
-# ─────────────────────────────────────────────
+# ───────────────────────────────────────────────────────
 # Consent Logging
-# ─────────────────────────────────────────────
-
+# ───────────────────────────────────────────────────────
 CONSENT_FILE = Path("consent_log.json")
 
 def save_consent(call_id: str, consent: bool):
@@ -103,34 +83,47 @@ async def consent(call_id: str, consent: bool):
     save_consent(call_id, consent)
     return {"message": "Consent stored"}
 
-# ─────────────────────────────────────────────
-# Call Summary Report
-# ─────────────────────────────────────────────
+# ───────────────────────────────────────────────────────
+# Feedback storage
+# ───────────────────────────────────────────────────────
+class FeedbackItem(BaseModel):
+    call_id: str
+    text: str
+    helpful: bool
 
+@app.post("/feedback")
+async def feedback(item: FeedbackItem):
+    save_feedback(item.call_id, item.text, item.helpful)
+    return {"message": "Feedback recorded"}
+
+@app.get("/feedback/summary")
+async def feedback_summary():
+    return count_feedback()
+
+# ───────────────────────────────────────────────────────
+# Post-call summary endpoint
+# ───────────────────────────────────────────────────────
 @app.get("/summary/{call_id}")
-async def summary(call_id: str):
-    convo = get_context(call_id)
-    sentiment_overall = "negative" if any("not happy" in c.lower() or "bad" in c.lower() for c in convo) else "neutral"
-    compliance_overall = "flagged" if any("card" in c.lower() or "email" in c.lower() for c in convo) else "clean"
-    text_summary = await SummaryAgent(convo)
-    escalation = await EscalationAgent(sentiment_overall, compliance_overall)
+async def post_call_summary(call_id: str):
+    context = get_context(call_id)
+    summary = await SummaryAgent(context)
+    overall_sentiment = "neutral"
+    overall_compliance = "clean"
+
+    if any("refund" in line.lower() or "angry" in line.lower() for line in context):
+        overall_sentiment = "negative"
+
+    if any("card" in line.lower() or "cvv" in line.lower() for line in context):
+        overall_compliance = "flagged"
+
+    escalation = "Recommended" if (
+        overall_sentiment == "negative" or overall_compliance == "flagged"
+    ) else "Not needed"
 
     return {
-        "summary": text_summary,
-        "sentiment_overall": sentiment_overall,
-        "compliance_overall": compliance_overall,
+        "summary": summary,
+        "sentiment_overall": overall_sentiment,
+        "compliance_overall": overall_compliance,
         "escalation": escalation,
-        "utterances": convo
+        "utterances": context
     }
-
-# ─────────────────────────────────────────────
-# Bedrock integration placeholder (future)
-# ─────────────────────────────────────────────
-
-# Replace /suggest logic with Bedrock when credits come:
-# try:
-#     result = gen_suggestion(safe_text)
-#     result["pii_redacted"] = safe_text != chunk.text
-#     return result
-# except Exception as e:
-#     return {"error": str(e)}

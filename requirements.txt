@@ -22,12 +22,12 @@ jsonschema==4.24.0
 jsonschema-specifications==2025.4.1
 MarkupSafe==3.0.2
 narwhals==1.44.0
-numpy==2.3.1
+numpy==1.26.4
 packaging==25.0
-pandas==2.3.0
-pillow==11.2.1
+pandas==2.2.2
+pillow==11.2.0
 protobuf==6.31.1
-pyarrow==20.0.0
+pyarrow==15.0.2
 pydantic==2.11.7
 pydantic_core==2.33.2
 pydeck==0.9.1
@@ -50,8 +50,14 @@ tornado==6.5.1
 typing-inspection==0.4.1
 typing_extensions==4.14.0
 tzdata==2025.2
-urllib3==2.5.0
+urllib3==2.2.1
 uvicorn==0.34.3
 watchdog==6.0.0
 watchfiles==1.1.0
 websockets==15.0.1
+
+# 🔊 Audio Input Requirements
+pydub==0.25.1
+speechrecognition==3.10.1
+av==10.0.0
+streamlit-webrtc==0.45.3
