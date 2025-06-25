@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from dotenv import load_dotenv
 import os
 from fastapi import Request
-from backend.feedback_store import save_feedback, count_feedback
+
 # When credits arrive, uncomment the next import and swap logic
 # from backend.bedrock_service import gen_suggestion
 
@@ -59,6 +59,10 @@ async def suggest(chunk: TranscriptChunk):
     # except Exception as e:
     #     return {"error": str(e)}
     # ----------------------------------------------------------------
+
+from backend.feedback_store import save_feedback, count_feedback
+from pydantic import BaseModel
+
 class FeedbackItem(BaseModel):
     call_id: str
     text: str
