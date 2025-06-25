@@ -38,7 +38,7 @@ CallMate AI supports customer agents during high-pressure conversations by provi
 
 ## 🧠 Architecture
 
-``` mermaid
+``` 
 graph TD
     U[👤 User (Voice/Text)] --> R(🔒 Redactor)
     R --> SA(Sentiment Agent)
