@@ -13,5 +13,10 @@
     "call_id": "demo-call-123",
     "text": "hid",
     "helpful": true
+  },
+  {
+    "call_id": "demo-call-123",
+    "text": "hid",
+    "helpful": false
   }
 ]

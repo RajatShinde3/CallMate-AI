@@ -4,6 +4,8 @@ from pydantic import BaseModel
 from dotenv import load_dotenv
 import os
 from fastapi import Request
+from pathlib import Path
+import json
 
 # When credits arrive, uncomment the next import and swap logic
 # from backend.bedrock_service import gen_suggestion
@@ -26,28 +28,48 @@ async def root():
 # ------------------------------------------------------------------
 # MAIN ENDPOINT
 # ------------------------------------------------------------------
+from backend.agents import SentimentAgent, KnowledgeAgent, ComplianceAgent
+import time
+import asyncio 
+
 @app.post("/suggest")
 async def suggest(chunk: TranscriptChunk):
-    """
-    1. Redact PII from the incoming transcript
-    2. (Temporary) generate a mock suggestion
-    3. Return sentiment + redaction flag
-    """
-    # 1️⃣  PII redaction
     safe_text = redact(chunk.text)
+    start_time = time.time()
 
-    # 2️⃣  MOCK suggestion while waiting for Bedrock credits
-    suggestion = (
-        f"Apologize for the delay and assure action – based on: "
-        f"{safe_text[:40]}..."
+    # Run agents in parallel
+    sentiment_task = SentimentAgent(safe_text)
+    suggestion_task = KnowledgeAgent(safe_text)
+    compliance_task = ComplianceAgent(safe_text)
+
+    sentiment, suggestion, compliance = await asyncio.gather(
+        sentiment_task, suggestion_task, compliance_task
     )
 
-    # 3️⃣  Assemble response (add 'pii_redacted' so UI can show badge)
+    latency_ms = int((time.time() - start_time) * 1000)
+
     return {
-        "suggestion": suggestion,
-        "sentiment": "neutral",
-        "pii_redacted": safe_text != chunk.text
+        "suggestion": suggestion + f" (via multi-agent)",
+        "sentiment": sentiment,
+        "compliance": compliance,
+        "pii_redacted": safe_text != chunk.text,
+        "latency_ms": latency_ms
     }
+
+
+CONSENT_FILE = Path("consent_log.json")
+
+def save_consent(call_id: str, consent: bool):
+    log = []
+    if CONSENT_FILE.exists():
+        log = json.loads(CONSENT_FILE.read_text())
+    log.append({"call_id": call_id, "consent": consent})
+    CONSENT_FILE.write_text(json.dumps(log, indent=2))
+
+@app.post("/consent")
+async def consent(call_id: str, consent: bool):
+    save_consent(call_id, consent)
+    return {"message": "Consent stored"}
 
     # ----------------------------------------------------------------
     # 🔄 Once you have Bedrock access, replace section above with:
