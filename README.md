@@ -38,7 +38,7 @@ CallMate AI supports customer agents during high-pressure conversations by provi
 
 ## 🧠 Architecture
 
-```mermaid
+``` mermaid
 graph TD
     U[👤 User (Voice/Text)] --> R(🔒 Redactor)
     R --> SA(Sentiment Agent)
@@ -182,5 +182,14 @@ callmate-ai/
 
 > ⚠️ DO NOT commit `.env` or sensitive data.
 > This repo includes a `.env.example` to help set up locally.
+
+---
+
+## 🔐 Environment Setup
+
+1. Duplicate `.env.example` → rename to `.env`
+2. Fill in your API keys before running the app.
+
+> ⚠️ Keep your `.env` private. Never upload to GitHub.
 
 ---
