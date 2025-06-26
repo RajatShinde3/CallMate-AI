@@ -1,3 +1,8 @@
+# ───────────────────────────────────────────────────────
+# 📦 CallMate AI – main.py (Backend API)
+# Fully Updated with Feedback History, Summary, and Consent
+# ───────────────────────────────────────────────────────
+
 from fastapi import FastAPI
 from pydantic import BaseModel
 from dotenv import load_dotenv
@@ -14,6 +19,7 @@ from backend.agents import (
 from backend.pii_redactor import redact
 from backend.feedback_db import save_feedback_sql as save_feedback
 from backend.feedback_db import summary_sql as count_feedback
+from backend.feedback_store import save_feedback, count_feedback, load_feedback_history
 
 load_dotenv()
 
@@ -27,7 +33,7 @@ class TranscriptChunk(BaseModel):
     call_id: str
 
 # ───────────────────────────────────────────────────────
-# Root health check
+# Health Check
 # ───────────────────────────────────────────────────────
 @app.get("/")
 async def root():
@@ -42,7 +48,6 @@ async def suggest(chunk: TranscriptChunk):
     add_utterance(chunk.call_id, safe_text)
     start_time = time.time()
 
-    # Run agents concurrently
     (sentiment, s_conf), (suggestion, k_conf), (compliance, c_conf) = await asyncio.gather(
         SentimentAgent(safe_text),
         KnowledgeAgent(safe_text),
@@ -53,20 +58,19 @@ async def suggest(chunk: TranscriptChunk):
     latency_ms = int((time.time() - start_time) * 1000)
 
     return {
-    "suggestion": f"{suggestion} (via multi-agent)",
-    "sentiment": sentiment,
-    "compliance": compliance,
-    "confidence": {
-        "sentiment": s_conf,
-        "knowledge": k_conf,
-        "compliance": c_conf,
-    },
-    "escalation": escalation,
-    "pii_redacted": safe_text != chunk.text,
-    "redacted_text": safe_text,
-    "latency_ms": latency_ms,
-}
-
+        "suggestion": f"{suggestion} (via multi-agent)",
+        "sentiment": sentiment,
+        "compliance": compliance,
+        "confidence": {
+            "sentiment": s_conf,
+            "knowledge": k_conf,
+            "compliance": c_conf,
+        },
+        "escalation": escalation,
+        "pii_redacted": safe_text != chunk.text,
+        "redacted_text": safe_text,
+        "latency_ms": latency_ms,
+    }
 
 # ───────────────────────────────────────────────────────
 # Consent Logging
@@ -86,7 +90,7 @@ async def consent(call_id: str, consent: bool):
     return {"message": "Consent stored"}
 
 # ───────────────────────────────────────────────────────
-# Feedback storage
+# Feedback Endpoints
 # ───────────────────────────────────────────────────────
 class FeedbackItem(BaseModel):
     call_id: str
@@ -96,14 +100,19 @@ class FeedbackItem(BaseModel):
 @app.post("/feedback")
 async def feedback(item: FeedbackItem):
     save_feedback(item.call_id, item.text, item.helpful)
+    save_feedback_history(item.call_id, item.text, item.helpful)
     return {"message": "Feedback recorded"}
 
 @app.get("/feedback/summary")
 async def feedback_summary():
     return count_feedback()
 
+@app.get("/feedback/history")
+async def feedback_history():
+    return load_feedback_history()
+
 # ───────────────────────────────────────────────────────
-# Post-call summary endpoint
+# Post-call Summary Report
 # ───────────────────────────────────────────────────────
 @app.get("/summary/{call_id}")
 async def post_call_summary(call_id: str):
@@ -127,5 +136,6 @@ async def post_call_summary(call_id: str):
         "sentiment_overall": overall_sentiment,
         "compliance_overall": overall_compliance,
         "escalation": escalation,
-        "utterances": context
+        "utterances": context,
+        "voice_quality": 88  # Simulated for now, could be calculated from audio in future
     }
