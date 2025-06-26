@@ -1,7 +1,5 @@
 # 📞 CallMate AI – Your Real-Time GenAI Voice Assistant for Customer Support
 
-![CallMate Banner](https://callmate.life/assets/banner.png) <!-- Replace with your actual banner or remove -->
-
 **CallMate AI** is a cutting-edge real-time voice assistant powered by Generative AI and multi-agent architecture. Designed to support customer service teams, it provides live speech-to-AI interaction, agent suggestions, feedback tracking, and compliance checks — all from within an intuitive, Streamlit-powered interface.
 
 🌐 Live Demo: [callmate.streamlit.app](https://callmate.streamlit.app)  
