@@ -157,10 +157,10 @@ with tab_main:
     if st.button("🔁 Get AI Suggestion", disabled=(not st.session_state.consent_given or len(text_input.strip()) == 0)):
         try:
             if not st.session_state.consent_sent:
-                requests.post("http://localhost:8000/consent", params={"call_id": CALL_ID, "consent": True}, timeout=5)
+                requests.post("https://callmate-ai.onrender.com/consent", params={"call_id": CALL_ID, "consent": True}, timeout=5)
                 st.session_state.consent_sent = True
             with st.spinner("💡 Thinking…"):
-                resp = requests.post("http://localhost:8000/suggest", json={"text": text_input, "call_id": CALL_ID}, timeout=15)
+                resp = requests.post("https://callmate-ai.onrender.com/suggest", json={"text": text_input, "call_id": CALL_ID}, timeout=15)
             data = resp.json()
             st.session_state.last_resp = data
             sanitized = data.get("redacted_text", text_input)
@@ -192,7 +192,7 @@ with tab_main:
         st.markdown("### 🗣️ Was this suggestion helpful?")
         fb1, fb2 = st.columns(2)
         def send_fb(helpful: bool):
-            requests.post("http://localhost:8000/feedback", json={"call_id": CALL_ID, "text": st.session_state.last_input, "helpful": helpful}, timeout=5)
+            requests.post("https://callmate-ai.onrender.com/feedback", json={"call_id": CALL_ID, "text": st.session_state.last_input, "helpful": helpful}, timeout=5)
         if fb1.button("👍 Yes"):
             send_fb(True)
             st.success("Thanks!")
@@ -201,7 +201,7 @@ with tab_main:
             st.warning("We’ll improve!")
 
         if st.button("📁 End Call & Generate Report"):
-            rep = requests.get(f"http://localhost:8000/summary/{CALL_ID}", timeout=10).json()
+            rep = requests.get(f"https://callmate-ai.onrender.com/summary/{CALL_ID}", timeout=10).json()
             st.markdown("## 📁 Post-Call Report")
             st.write(rep["summary"])
             st.markdown(
@@ -224,14 +224,14 @@ with tab_dash:
 
     try:
         # Feedback summary from backend
-        summary = requests.get("http://localhost:8000/feedback/summary", timeout=5).json()
+        summary = requests.get("https://callmate-ai.onrender.com/feedback/summary", timeout=5).json()
         total_fb = summary.get("👍", 0) + summary.get("👎", 0)
         helpful_pct = summary.get("👍", 0) / total_fb * 100 if total_fb else 0
         avg_latency = (
             sum(st.session_state.latency_list) / len(st.session_state.latency_list)
             if st.session_state.latency_list else 0
         )
-        esc = requests.get(f"http://localhost:8000/summary/{CALL_ID}", timeout=5).json()
+        esc = requests.get(f"https://callmate-ai.onrender.com/summary/{CALL_ID}", timeout=5).json()
         voice_quality = esc.get("voice_quality", 88)
 
         # 🔹 KPI Metrics
@@ -257,7 +257,7 @@ with tab_dash:
             st.success("✅ No escalation needed")
 
         # 🔸 Feedback History + Graph
-        feedback_data = requests.get("http://localhost:8000/feedback/history", timeout=5).json()
+        feedback_data = requests.get("https://callmate-ai.onrender.com/feedback/history", timeout=5).json()
 
         if isinstance(feedback_data, list) and any("timestamp" in f for f in feedback_data):
             # Filter out entries without timestamp
