@@ -51,3 +51,4 @@ smmap==5.0.2
 toml==0.10.2
 PyYAML==6.0.2
 gunicorn==21.2.0
+plotly>=5.20.0
