@@ -103,9 +103,13 @@ async def feedback(item: FeedbackItem):
     save_feedback_history(item.call_id, item.text, item.helpful)
     return {"message": "Feedback recorded"}
 
+from fastapi.responses import JSONResponse
+
 @app.get("/feedback/summary")
 async def feedback_summary():
-    return count_feedback()
+    summary_data = count_feedback() or {}
+    return JSONResponse(content=summary_data)
+
 
 @app.get("/feedback/history")
 async def feedback_history():
