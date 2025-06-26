@@ -22,10 +22,13 @@ jsonschema==4.24.0
 jsonschema-specifications==2025.4.1
 MarkupSafe==3.0.2
 narwhals==1.44.0
+
+# 🔧 SAFE numpy and pillow versions
 numpy==1.26.4
+pillow==10.3.0
+
 packaging==25.0
 pandas==2.2.2
-pillow==11.2.0
 protobuf==6.31.1
 pyarrow==15.0.2
 pydantic==2.11.7
