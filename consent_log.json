@@ -1,0 +1,24 @@
+[
+  {
+    "call_id": "demo-test",
+    "text": "I need a refund!",
+    "helpful": true,
+    "timestamp": "2025-06-26T10:00:00"
+  },
+  {
+    "call_id": "demo-test",
+    "text": "My card isn't working.",
+    "helpful": false,
+    "timestamp": "2025-06-26T10:03:00"
+  },
+  {
+    "call_id": "demo-test",
+    "text": "Resolved issue quickly",
+    "helpful": true,
+    "timestamp": "2025-06-26T10:05:00"
+  },
+  {
+    "call_id": "demo-9a493de9",
+    "consent": true
+  }
+]

@@ -22,13 +22,10 @@ jsonschema==4.24.0
 jsonschema-specifications==2025.4.1
 MarkupSafe==3.0.2
 narwhals==1.44.0
-
-# 🔧 SAFE numpy and pillow versions
-numpy==1.26.4
-pillow==10.3.0
-
+numpy>=1.23,<1.27
 packaging==25.0
 pandas==2.2.2
+pillow==10.3.0  # downgraded from 11.2.0
 protobuf==6.31.1
 pyarrow==15.0.2
 pydantic==2.11.7
@@ -63,4 +60,4 @@ websockets==15.0.1
 pydub==0.25.1
 speechrecognition==3.10.1
 av==10.0.0
-streamlit-webrtc==0.45.3
+streamlit-webrtc==0.45.2  # or ==0.63.1 if latest is preferred
