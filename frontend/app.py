@@ -312,7 +312,12 @@ with tab_dash:
     st.caption("Real-time insights & agent performance analytics")
 
     # Optional: auto-refresh dashboard every 30s
-    st.autorefresh(interval=30_000, key="dash_autorefresh")
+    auto = st.checkbox("Auto-refresh every 30s", value=True, help="Refreshes the dashboard data periodically")
+    if auto:
+        st_autorefresh(interval=30_000, key="dash_autorefresh")
+    else:
+        if st.button("↻ Refresh now"):
+            st.experimental_rerun()
 
     backend_ok = health_check()
     st.markdown(
