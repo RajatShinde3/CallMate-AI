@@ -329,7 +329,7 @@ with tab_dash:
         st_autorefresh(interval=30_000, key="dash_autorefresh")
     else:
         if st.button("↻ Refresh now"):
-            st.experimental_rerun()
+            st.rerun()
 
     backend_ok = health_check()
     st.markdown(
