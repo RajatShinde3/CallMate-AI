@@ -7,6 +7,14 @@ import speech_recognition as sr
 from pydub import AudioSegment
 import pandas as pd
 
+# ✅ Import (or safely fallback) for auto-refresh
+try:
+    from streamlit_autorefresh import st_autorefresh
+except Exception:
+    def st_autorefresh(*args, **kwargs):
+        # No-op if the optional package isn't installed
+        pass
+
 # OPTIONAL: remove if unused
 # import altair as alt
 
@@ -17,11 +25,12 @@ BACKEND_URL = os.environ.get("CALLMATE_URL", "https://callmate-ai.onrender.com")
 
 # ─────────────────────────────────────────────────────────────
 # 1️⃣ FFmpeg Path Configuration (Required by pydub)
+#    Prefer ENV var or system PATH (works on Streamlit Cloud/Linux)
 # ─────────────────────────────────────────────────────────────
-AudioSegment.converter = (
-    r"C:\\Users\\rajat\\Downloads\\Compressed\\ffmpeg-7.1.1-essentials_build"
-    r"\\ffmpeg-7.1.1-essentials_build\\bin\\ffmpeg.exe"
-)
+ffmpeg_bin = os.getenv("FFMPEG_BINARY")  # e.g., "/usr/bin/ffmpeg"
+if ffmpeg_bin:
+    AudioSegment.converter = ffmpeg_bin
+# else: rely on system ffmpeg on PATH
 
 # ─────────────────────────────────────────────────────────────
 # 2️⃣ Streamlit Page Configuration
@@ -148,9 +157,12 @@ with tab_main:
     class AudioProcessor:
         def recv(self, frame: av.AudioFrame):
             audio_q.put(frame.to_ndarray().tobytes())
+            # ✅ Guard against frame.layout being None (some codecs/platforms)
+            layout = getattr(frame, "layout", None)
+            channels = getattr(layout, "channels", 1)
             st.session_state.audio_format = {
-                "sample_rate": frame.sample_rate,
-                "channels": frame.layout.channels,
+                "sample_rate": getattr(frame, "sample_rate", 48000),
+                "channels": channels,
                 "sample_width": 2,
             }
             return frame
@@ -283,8 +295,8 @@ with tab_main:
         if st.button("📁 End Call & Generate Report"):
             rep = get_json("/summary/" + CALL_ID, connect_timeout=3, read_timeout=20, default={"_error": "unavailable"})
             if "_error" in rep and st.session_state.last_good_session_report:
-                rep = st.session_state.last_good_session_report
                 st.info("Showing last available report (backend slow).")
+                rep = st.session_state.last_good_session_report
             elif "_error" not in rep:
                 st.session_state.last_good_session_report = rep
 
